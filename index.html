@@ -1,1 +1,273 @@
-# llllllklk
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Maa Gayatri Enterprises</title>
+
+<style>
+body{margin:0;font-family:system-ui;background:#f5f7fb}
+header{
+  background:#0d6efd;color:#fff;padding:15px;text-align:center
+}
+header h1{margin:0;font-size:20px}
+.tag{font-size:13px;opacity:.9}
+
+.container{padding:10px}
+
+.filters{display:flex;overflow:auto}
+.filters button{
+  margin:5px;padding:8px 12px;border:none;border-radius:20px;
+  background:#e0e0e0;cursor:pointer;white-space:nowrap
+}
+.filters button.active{background:#0d6efd;color:#fff}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px
+}
+
+.card{
+  background:#fff;padding:10px;border-radius:12px;
+  box-shadow:0 3px 10px rgba(0,0,0,.08);
+  transition:.2s
+}
+.card:hover{transform:scale(1.02)}
+.card img{
+  width:100%;height:120px;object-fit:cover;border-radius:8px
+}
+.card h4{margin:5px 0;font-size:14px}
+.card p{margin:0;color:#28a745;font-weight:bold}
+.card button{
+  width:100%;margin-top:5px;padding:6px;border:none;
+  border-radius:6px;background:#28a745;color:#fff
+}
+
+.cart-btn{
+  position:fixed;bottom:20px;right:20px;
+  background:#ff5722;color:#fff;
+  padding:15px;border-radius:50%;
+  font-size:18px;cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,.2)
+}
+
+.cart{
+  position:fixed;top:0;right:-100%;
+  width:100%;height:100%;background:#fff;
+  transition:.3s;overflow:auto;padding:15px
+}
+.cart.active{right:0}
+
+.cart-item{
+  border-bottom:1px solid #eee;
+  padding:10px 0;font-size:14px
+}
+
+.qty button{
+  margin:2px;padding:2px 8px;border:none;
+  background:#ddd;border-radius:4px
+}
+
+.total{
+  font-size:18px;margin-top:10px;
+  font-weight:bold
+}
+
+input,textarea{
+  width:100%;padding:10px;margin:5px 0;
+  border-radius:6px;border:1px solid #ccc
+}
+
+button.place{
+  width:100%;padding:10px;
+  background:#0d6efd;color:#fff;border:none;
+  border-radius:6px;margin-top:10px
+}
+
+.whatsapp{
+  position:fixed;bottom:20px;left:20px;
+  background:#25D366;color:#fff;
+  padding:14px;border-radius:50%;
+  font-size:20px;text-decoration:none
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Maa Gayatri Enterprises</h1>
+<div class="tag">Insurance • Construction • Fertilizer • Transport</div>
+</header>
+
+<div class="container">
+
+<div class="filters">
+<button onclick="filter('all')" class="active">All</button>
+<button onclick="filter('Groceries')">Groceries</button>
+<button onclick="filter('Dairy')">Dairy</button>
+<button onclick="filter('Snacks')">Snacks</button>
+<button onclick="filter('Beverages')">Beverages</button>
+</div>
+
+<div class="grid" id="products"></div>
+
+</div>
+
+<div class="cart-btn" onclick="toggleCart()">🛒 <span id="count">0</span></div>
+
+<div class="cart" id="cart">
+<h2>Your Cart</h2>
+<div id="cartItems"></div>
+<div class="total">Total: ₹<span id="total">0</span></div>
+
+<h3>Checkout</h3>
+
+<form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" onsubmit="return placeOrder()">
+<input type="hidden" name="order" id="orderData">
+
+<input type="text" placeholder="Your Name" required id="name">
+<input type="text" placeholder="Phone Number" required id="phone">
+<textarea placeholder="Delivery Address" required id="address"></textarea>
+<textarea placeholder="Special Instructions"></textarea>
+
+<button class="place" type="submit">Place Order</button>
+</form>
+
+</div>
+
+<a class="whatsapp" href="https://wa.me/919934050065">💬</a>
+
+<script>
+
+let products=[
+{name:"Aashirvaad Atta",price:280,cat:"Groceries",img:"https://i.ibb.co/3k8pY8B/atta.jpg"},
+{name:"Rice 5kg",price:300,cat:"Groceries",img:"https://i.ibb.co/7JzqvJt/rice.jpg"},
+{name:"Sugar 1kg",price:45,cat:"Groceries",img:"https://i.ibb.co/8m8Z5Yy/sugar.jpg"},
+{name:"Amul Butter",price:280,cat:"Dairy",img:"https://i.ibb.co/f8bK7dP/butter.jpg"},
+{name:"Milk Packet",price:60,cat:"Dairy",img:"https://i.ibb.co/6t4g7sY/milk.jpg"},
+{name:"Maggi",price:15,cat:"Snacks",img:"https://i.ibb.co/XyK0W7P/maggi.jpg"},
+{name:"Parle-G",price:10,cat:"Snacks",img:"https://i.ibb.co/Kb9k6Xj/biscuit.jpg"},
+{name:"Chips",price:20,cat:"Snacks",img:"https://i.ibb.co/2gR2g9F/chips.jpg"},
+{name:"Coca Cola",price:40,cat:"Beverages",img:"https://i.ibb.co/ZYW3VTp/coke.jpg"},
+{name:"Pepsi",price:40,cat:"Beverages",img:"https://i.ibb.co/2kR0X9X/pepsi.jpg"}
+];
+
+let cart=JSON.parse(localStorage.getItem("cart"))||[];
+
+function render(list){
+let html="";
+list.forEach((p,i)=>{
+html+=`
+<div class="card">
+<img src="${p.img}" loading="lazy">
+<h4>${p.name}</h4>
+<p>₹${p.price}</p>
+<button onclick="add(${i})">Add to Cart</button>
+</div>`;
+});
+productsDiv.innerHTML=html;
+}
+
+function filter(cat){
+document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+event.target.classList.add("active");
+if(cat=="all") render(products);
+else render(products.filter(p=>p.cat==cat));
+}
+
+function add(i){
+let p=products[i];
+let f=cart.find(x=>x.name==p.name);
+if(f)f.qty++;
+else cart.push({...p,qty:1});
+update();
+}
+
+function update(){
+localStorage.setItem("cart",JSON.stringify(cart));
+let count=0,total=0,html="";
+
+cart.forEach((c,i)=>{
+count+=c.qty;
+total+=c.qty*c.price;
+
+html+=`
+<div class="cart-item">
+<b>${c.name}</b><br>
+₹${c.price} x ${c.qty} = ₹${c.price*c.qty}
+<div class="qty">
+<button onclick="qty(${i},-1)">-</button>
+<button onclick="qty(${i},1)">+</button>
+<button onclick="del(${i})">Remove</button>
+</div>
+</div>`;
+});
+
+countEl.innerText=count;
+cartItems.innerHTML=html;
+totalEl.innerText=total;
+}
+
+function qty(i,d){
+cart[i].qty+=d;
+if(cart[i].qty<=0)cart.splice(i,1);
+update();
+}
+
+function del(i){
+cart.splice(i,1);
+update();
+}
+
+function toggleCart(){
+cartDiv.classList.toggle("active");
+}
+
+function placeOrder(){
+let msg="Order Details:\n\n";
+
+cart.forEach(c=>{
+msg+=`${c.name} x ${c.qty} = ₹${c.qty*c.price}\n`;
+});
+
+msg+=`\nTotal: ₹${totalEl.innerText}`;
+msg+=`\n\nName: ${name.value}`;
+msg+=`\nPhone: ${phone.value}`;
+msg+=`\nAddress: ${address.value}`;
+
+orderData.value=msg;
+
+setTimeout(()=>{
+localStorage.removeItem("cart");
+cart=[];
+update();
+
+let wa=`https://wa.me/919934050065?text=${encodeURIComponent(msg)}`;
+window.open(wa,"_blank");
+
+alert("Order placed! We will contact you soon.");
+},500);
+
+return true;
+}
+
+let productsDiv=document.getElementById("products");
+let cartItems=document.getElementById("cartItems");
+let countEl=document.getElementById("count");
+let totalEl=document.getElementById("total");
+let cartDiv=document.getElementById("cart");
+let name=document.getElementById("name");
+let phone=document.getElementById("phone");
+let address=document.getElementById("address");
+let orderData=document.getElementById("orderData");
+
+render(products);
+update();
+
+</script>
+
+</body>
+</html>
